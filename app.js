@@ -26,6 +26,7 @@
   ];
 
   const ICON = {
+    ban: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M6 6l12 12"/></svg>',
     lock: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
     x: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M7 7l10 10M17 7 7 17"/></svg>',
     join: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h6m0 0-3-3m3 3-3 3"/><path d="M21 12h-6m0 0 3-3m-3 3 3 3"/></svg>',
@@ -261,13 +262,14 @@
 
     const seatHTML = (r, c) => {
       const k = key(r, c);
-      if (off.has(k)) return `<div class="seat off" data-k="${k}">${editMode ? ICON.x : ''}</div>`;
+      if (off.has(k)) return `<div class="seat off" data-k="${k}" title="클릭하면 다시 사용하는 자리로 돌아와요">${ICON.x}<span class="offlbl">빈자리</span></div>`;
       const s = M.get(S.assign[k]);
       const sel = selected && selected.type === 'seat' && selected.k === k ? ' sel' : '';
-      if (!s) return `<div class="seat empty${sel}" data-k="${k}"></div>`;
+      if (!s) return `<div class="seat empty${sel}" data-k="${k}" title="클릭하면 빈자리로 지정돼요"></div>`;
       return `<div class="seat filled${lock.has(k) ? ' locked' : ''}${sel}" data-k="${k}" draggable="${!editMode}">`
         + (s.name ? `<span class="no">${esc(s.no)}</span>` : '')
         + `<span class="nm">${esc(mainText(s))}</span>`
+        + `<button class="ban" data-ban="${k}" title="빈자리로 지정 (학생은 미배치 목록으로)">${ICON.ban}</button>`
         + `<button class="lock" data-lock="${k}" title="${lock.has(k) ? '고정 해제' : '이 자리 고정 (섞어도 그대로)'}">${ICON.lock}</button></div>`;
     };
 
@@ -394,17 +396,26 @@
       S.locked = S.locked.includes(k) ? S.locked.filter(x => x !== k) : [...S.locked, k];
       return render();
     }
+    const bb = e.target.closest('.ban');
+    if (bb) {
+      const k = bb.dataset.ban, s = studentMap().get(S.assign[k]);
+      S.layout.disabled.push(k);
+      delete S.assign[k];
+      selected = null;
+      render();
+      if (s) toast(`${fullLabel(s)} 학생은 아래 미배치 목록으로 이동했어요.`);
+      return;
+    }
     const seat = e.target.closest('.seat[data-k]');
     if (!seat) return;
     const k = seat.dataset.k;
-    if (editMode) {
+    if (editMode || seat.classList.contains('off') || (!selected && !S.assign[k])) {
       const d = S.layout.disabled;
       if (d.includes(k)) S.layout.disabled = d.filter(x => x !== k);
       else { d.push(k); delete S.assign[k]; }
       return render();
     }
-    if (seat.classList.contains('off')) return;
-    if (!selected) { if (S.assign[k]) selected = { type: 'seat', k }; }
+    if (!selected) selected = { type: 'seat', k };
     else if (selected.type === 'seat' && selected.k === k) selected = null;
     else { place(selected, k); selected = null; }
     render();
