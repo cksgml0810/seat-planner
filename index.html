@@ -161,7 +161,12 @@
 
       <div class="rule">
         <div class="rule-head"><b>떨어뜨릴 학생</b><small>서로 가까이 앉지 않게 배치</small></div>
-        <div class="pick"><select id="apA"></select><select id="apB"></select><button class="btn sm" id="apAdd">추가</button></div>
+        <div class="field"><label>기준 학생</label><select id="apA"></select></div>
+        <div class="field"><label>떨어뜨릴 학생 <small>여러 명 선택 가능</small></label>
+          <input type="text" id="apNums" placeholder="번호로 입력 후 Enter (예: 5, 6, 8)">
+          <div class="multi" id="apMulti"></div>
+        </div>
+        <div class="pick-foot"><span id="apSel">기준 학생을 먼저 선택하세요</span><button class="btn sm" id="apAdd">추가</button></div>
         <div class="field inline"><label>거리</label>
           <select id="apDist">
             <option value="1">주변 8칸 금지 (앞·뒤·옆·대각선)</option>

@@ -261,6 +261,18 @@ input:focus, textarea:focus, select:focus { border-color: var(--accent2); box-sh
 .pick select { flex: 1; min-width: 0; }
 .rule .chip { background: var(--accent-soft); color: var(--accent); }
 .rule .chip i { font-style: normal; color: #a5abf5; }
+.multi { display: flex; flex-wrap: wrap; gap: 5px; max-height: 150px; overflow-y: auto; padding: 2px; }
+.multi:empty { display: none; }
+.mchip { height: 28px; padding: 0 10px; border-radius: 999px; border: 1px solid var(--line2); background: #fff; font-size: 12px; color: var(--ink2); cursor: pointer; transition: .12s; }
+.mchip:hover { border-color: var(--accent2); }
+.mchip.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.mchip.had { background: var(--soft); border-color: var(--soft); color: var(--faint); cursor: default; text-decoration: line-through; }
+.pick-foot { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--muted); }
+#apList { flex-direction: column; flex-wrap: nowrap; align-items: stretch; max-height: 220px; }
+.grp { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; padding: 8px 10px; border-radius: 10px; background: #fafbff; border: 1px solid #eceefe; font-size: 12.5px; }
+.grp > b { color: var(--accent); }
+.grp > i { font-style: normal; color: #a5abf5; margin: 0 2px; }
+.grp .link { margin-left: auto; align-self: center; font-size: 11.5px; }
 .check { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
 .check input { width: 16px; height: 16px; accent-color: var(--accent); }
 .unmet { background: #fff8eb; border: 1px solid #f7dca8; color: #92590a; border-radius: 10px; padding: 10px 12px; font-size: 12.5px; line-height: 1.55; }

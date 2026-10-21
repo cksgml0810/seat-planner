@@ -603,7 +603,7 @@
     if (secret.hidden) return;
     const M = studentMap();
     const opts = '<option value="">학생 선택</option>' + S.students.map(s => `<option value="${esc(s.id)}">${esc(fullLabel(s))}</option>`).join('');
-    ['togA', 'togB', 'apA', 'apB', 'frA'].forEach(id => {
+    ['togA', 'togB', 'apA', 'frA'].forEach(id => {
       const el = $('#' + id), v = el.value;
       el.innerHTML = opts;
       if (M.has(v)) el.value = v;
@@ -612,7 +612,14 @@
     const pairChips = (arr, kind, sym) => arr.map((p, i) =>
       `<span class="chip">${esc(fullLabel(M.get(p[0])))} <i>${sym}</i> ${esc(fullLabel(M.get(p[1])))}<button data-rm="${kind}:${i}">×</button></span>`).join('');
     $('#togList').innerHTML = pairChips(R.together, 'together', '＋');
-    $('#apList').innerHTML = pairChips(R.apart, 'apart', '↔');
+    // 떨어뜨리기: 기준 학생별로 묶어서 표시
+    const groups = new Map();
+    R.apart.forEach((p, i) => { if (!groups.has(p[0])) groups.set(p[0], []); groups.get(p[0]).push([p[1], i]); });
+    $('#apList').innerHTML = [...groups].map(([a, list]) =>
+      `<div class="grp"><b>${esc(fullLabel(M.get(a)))}</b><i>↔</i>${list.map(([b, i]) =>
+        `<span class="chip">${esc(fullLabel(M.get(b)))}<button data-rm="apart:${i}" title="이 학생만 삭제">×</button></span>`).join('')}`
+      + `<button class="link danger" data-rmgrp="${esc(a)}">전체 삭제</button></div>`).join('');
+    renderApMulti();
     $('#frList').innerHTML = R.front.map((id, i) => `<span class="chip">${esc(fullLabel(M.get(id)))}<button data-rm="front:${i}">×</button></span>`).join('');
     $('#apDist').value = String(R.apartDist);
     $('#frRows').value = String(R.frontRows);
@@ -642,7 +649,49 @@
   }
 
   $('#togAdd').onclick = () => addPair('together', '#togA', '#togB');
-  $('#apAdd').onclick = () => addPair('apart', '#apA', '#apB');
+  // 떨어뜨리기: 한 명 ↔ 여러 명
+  const apPick = new Set();
+  const apLinked = a => new Set(S.rules.apart.filter(p => p.includes(a)).map(p => p[0] === a ? p[1] : p[0]));
+  function renderApMulti() {
+    const a = $('#apA').value, box = $('#apMulti');
+    if (!a) { box.innerHTML = ''; $('#apSel').textContent = '기준 학생을 먼저 선택하세요'; return; }
+    const had = apLinked(a);
+    box.innerHTML = S.students.filter(s => s.id !== a).map(s => {
+      const cls = had.has(s.id) ? ' had' : apPick.has(s.id) ? ' on' : '';
+      return `<button class="mchip${cls}" data-pick="${esc(s.id)}" title="${had.has(s.id) ? '이미 추가됨' : ''}">${esc(fullLabel(s))}</button>`;
+    }).join('');
+    $('#apSel').textContent = apPick.size ? `${apPick.size}명 선택됨` : '떨어뜨릴 학생을 클릭해 선택하세요';
+  }
+  $('#apA').addEventListener('change', () => { apPick.clear(); renderApMulti(); });
+  $('#apMulti').addEventListener('click', e => {
+    const b = e.target.closest('[data-pick]');
+    if (!b || b.classList.contains('had')) return;
+    const id = b.dataset.pick;
+    apPick.has(id) ? apPick.delete(id) : apPick.add(id);
+    renderApMulti();
+  });
+  $('#apNums').addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    e.preventDefault();
+    const a = $('#apA').value;
+    if (!a) return toast('기준 학생을 먼저 선택해 주세요.');
+    const had = apLinked(a), miss = [];
+    e.target.value.split(/[,\s/·]+/).map(t => t.replace(/번/g, '')).filter(Boolean).forEach(t => {
+      const s = S.students.find(x => x.no === t) || S.students.find(x => /^\d+$/.test(t) && parseFloat(x.no) === +t);
+      if (!s) miss.push(t); else if (s.id !== a && !had.has(s.id)) apPick.add(s.id);
+    });
+    e.target.value = '';
+    renderApMulti();
+    if (miss.length) toast(`찾을 수 없는 번호: ${miss.join(', ')}`);
+  });
+  $('#apAdd').onclick = () => {
+    const a = $('#apA').value;
+    if (!a) return toast('기준 학생을 선택해 주세요.');
+    if (!apPick.size) return toast('떨어뜨릴 학생을 한 명 이상 선택해 주세요.');
+    apPick.forEach(b => S.rules.apart.push([a, b]));
+    apPick.clear();
+    render();
+  };
   $('#frAdd').onclick = () => {
     const id = $('#frA').value;
     if (!id) return toast('학생을 선택해 주세요.');
@@ -653,7 +702,9 @@
   secret.addEventListener('click', e => {
     if (e.target === secret || e.target.closest('[data-close]')) return closeSecret();
     const rm = e.target.closest('[data-rm]');
-    if (rm) { const [kind, i] = rm.dataset.rm.split(':'); S.rules[kind].splice(+i, 1); render(); }
+    if (rm) { const [kind, i] = rm.dataset.rm.split(':'); S.rules[kind].splice(+i, 1); return render(); }
+    const rg = e.target.closest('[data-rmgrp]');
+    if (rg) { S.rules.apart = S.rules.apart.filter(p => p[0] !== rg.dataset.rmgrp); render(); }
   });
   $('#apDist').onchange = e => { S.rules.apartDist = +e.target.value; render(); };
   $('#frRows').onchange = e => { S.rules.frontRows = +e.target.value; render(); };
