@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>자리 배치</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <!-- ───────────── 사이드바 ───────────── -->
+  <aside class="side">
+    <div class="brand">
+      <div class="logo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+      </div>
+      <div><b>자리 배치</b><small>Classroom Seat Planner</small></div>
+    </div>
+
+    <!-- 1. 학생 명단 -->
+    <section class="card">
+      <h3><span class="step">1</span>학생 명단 <span class="count" id="stuCount"></span></h3>
+      <div class="seg" id="srcTabs">
+        <button data-tab="excel" class="on">엑셀 업로드</button>
+        <button data-tab="nums">번호로 만들기</button>
+        <button data-tab="paste">직접 입력</button>
+      </div>
+
+      <div class="tabpane" data-pane="excel">
+        <label class="drop" id="drop">
+          <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" hidden>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          <span><b>엑셀 파일</b>을 끌어다 놓거나 클릭</span>
+          <small>학번 · 이름 열이 있으면 자동 인식 (.xlsx .xls .csv)</small>
+        </label>
+        <button class="link" id="tplBtn">양식 파일 내려받기</button>
+      </div>
+
+      <div class="tabpane" data-pane="nums" hidden>
+        <div class="row2">
+          <div class="field"><label>시작 번호</label><input type="number" id="numStart" value="1" min="1"></div>
+          <div class="field"><label>끝 번호</label><input type="number" id="numEnd" value="30" min="1"></div>
+        </div>
+        <div class="field"><label>결번 <small>쉼표로 구분 · 범위 가능 (예: 22, 25-26)</small></label><input type="text" id="numSkip" placeholder="예: 22"></div>
+        <button class="btn block" id="numBtn">번호로 명단 만들기</button>
+      </div>
+
+      <div class="tabpane" data-pane="paste" hidden>
+        <textarea id="pasteBox" rows="6" placeholder="한 줄에 한 명씩&#10;1 홍길동&#10;2 김철수&#10;(엑셀에서 두 열을 복사해 붙여넣어도 됩니다)"></textarea>
+        <button class="btn block" id="pasteBtn">명단 적용</button>
+      </div>
+
+      <div class="stulist" id="stuList"></div>
+    </section>
+
+    <!-- 2. 교실 형태 -->
+    <section class="card">
+      <h3><span class="step">2</span>교실 형태</h3>
+      <div class="presets" id="presets"></div>
+      <div class="row2">
+        <div class="field"><label>열 (가로)</label>
+          <div class="stepper"><button data-step="cols" data-d="-1">−</button><span id="colsVal"></span><button data-step="cols" data-d="1">+</button></div>
+        </div>
+        <div class="field"><label>행 (세로)</label>
+          <div class="stepper"><button data-step="rows" data-d="-1">−</button><span id="rowsVal"></span><button data-step="rows" data-d="1">+</button></div>
+        </div>
+      </div>
+      <div class="field"><label>책상 묶음</label>
+        <div class="seg" id="groupSeg">
+          <button data-group="1">개별</button>
+          <button data-group="2">2인 짝</button>
+          <button data-group="3">3인</button>
+          <button data-group="0" class="custom">직접 설정</button>
+        </div>
+      </div>
+      <p class="hint">상단의 <b>좌석 편집</b>을 켜면 자리를 클릭해 빈자리로 만들고, 열 사이 버튼으로 책상을 붙이거나 띄울 수 있어요.</p>
+    </section>
+
+    <!-- 3. 보기 -->
+    <section class="card">
+      <h3><span class="step">3</span>보기 · 배치 방식</h3>
+      <div class="field"><label>시점</label>
+        <div class="seg" id="viewSeg"><button data-view="student">학생 시점 (교탁 위)</button><button data-view="teacher">교사 시점 (교탁 아래)</button></div>
+      </div>
+      <div class="field"><label>자리 표시</label>
+        <div class="seg" id="dispSeg"><button data-disp="both">번호+이름</button><button data-disp="name">이름</button><button data-disp="no">번호</button></div>
+      </div>
+      <div class="field"><label>남는 자리</label>
+        <div class="seg" id="fillSeg"><button data-fill="front">뒷자리 비우기</button><button data-fill="random">무작위로 비우기</button></div>
+      </div>
+    </section>
+
+    <footer class="sidefoot">
+      <button class="link" id="exportJson">설정 파일 저장</button>
+      <span>·</span>
+      <button class="link" id="importJson">불러오기</button>
+      <span>·</span>
+      <button class="link danger" id="resetAll">초기화</button>
+      <button class="dot" id="dot" aria-label="more" tabindex="-1"></button>
+      <input type="file" id="jsonInput" accept=".json" hidden>
+    </footer>
+  </aside>
+
+  <!-- ───────────── 메인 ───────────── -->
+  <main class="main">
+    <header class="toolbar">
+      <div class="titlebox">
+        <h1 id="title" contenteditable="true" spellcheck="false"></h1>
+        <div class="meta"><span id="today"></span><span class="sep">·</span><span id="stats"></span></div>
+      </div>
+      <div class="actions">
+        <button class="btn" id="editBtn" title="좌석 편집">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg><span>좌석 편집</span>
+        </button>
+        <button class="btn" id="clearBtn" title="배치 비우기">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg><span>비우기</span>
+        </button>
+        <button class="btn" id="xlsxBtn" title="엑셀로 저장">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v12"/><path d="m7 11 5 5 5-5"/><path d="M4 20h16"/></svg><span>엑셀</span>
+        </button>
+        <button class="btn" id="printBtn" title="인쇄">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6"/><rect x="3" y="9" width="18" height="8" rx="2"/><path d="M6 14h12v7H6z"/></svg><span>인쇄</span>
+        </button>
+        <button class="btn primary" id="shuffleBtn">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="M4 4l5 5"/></svg><span>자리 섞기</span>
+        </button>
+      </div>
+    </header>
+    <div class="editbar" id="editBar" hidden>
+      <b>좌석 편집 중</b> 자리를 클릭하면 빈자리(사용 안 함)로 바뀌고, 열 사이의 버튼으로 책상을 붙이거나 띄울 수 있어요.
+      <button class="btn sm" id="editDone">완료</button>
+    </div>
+    <div class="stage" id="stage">
+      <div class="room" id="room"></div>
+      <div class="tray" id="tray"></div>
+    </div>
+  </main>
+</div>
+
+<!-- ───────────── 세부 설정 (숨김) ───────────── -->
+<div class="modal" id="secret" hidden>
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="sheet-head">
+      <div>
+        <h2>세부 설정</h2>
+        <p>이 설정은 화면이나 인쇄물에 표시되지 않으며, 자리 섞기를 할 때만 반영됩니다.</p>
+      </div>
+      <button class="x" data-close aria-label="닫기">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="sheet-body">
+      <div class="unmet" id="unmet" hidden></div>
+
+      <div class="rule">
+        <div class="rule-head"><b>같이 앉힐 학생</b><small>나란히 붙은 옆자리(짝)에 배치</small></div>
+        <div class="pick"><select id="togA"></select><select id="togB"></select><button class="btn sm" id="togAdd">추가</button></div>
+        <div class="chips" id="togList"></div>
+      </div>
+
+      <div class="rule">
+        <div class="rule-head"><b>떨어뜨릴 학생</b><small>서로 가까이 앉지 않게 배치</small></div>
+        <div class="pick"><select id="apA"></select><select id="apB"></select><button class="btn sm" id="apAdd">추가</button></div>
+        <div class="field inline"><label>거리</label>
+          <select id="apDist">
+            <option value="1">주변 8칸 금지 (앞·뒤·옆·대각선)</option>
+            <option value="2">2칸 이내 금지</option>
+            <option value="3">3칸 이내 금지</option>
+          </select>
+        </div>
+        <div class="chips" id="apList"></div>
+      </div>
+
+      <div class="rule">
+        <div class="rule-head"><b>앞자리 지정 학생</b><small>교탁에서 가까운 줄에 배치</small></div>
+        <div class="pick"><select id="frA"></select><button class="btn sm" id="frAdd">추가</button></div>
+        <div class="field inline"><label>범위</label>
+          <select id="frRows">
+            <option value="1">첫째 줄만</option>
+            <option value="2">둘째 줄까지</option>
+            <option value="3">셋째 줄까지</option>
+          </select>
+        </div>
+        <div class="chips" id="frList"></div>
+      </div>
+
+      <div class="rule">
+        <label class="check"><input type="checkbox" id="avoidPrev"> 직전 배치의 짝과 다시 짝이 되지 않도록 (가능한 범위에서)</label>
+      </div>
+    </div>
+    <div class="sheet-foot">
+      <button class="link danger" id="rulesClear">세부 설정 모두 지우기</button>
+      <button class="btn primary" data-close>닫기</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="vendor/xlsx.full.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
