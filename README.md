@@ -1,5 +1,7 @@
 # 자리 배치 (Classroom Seat Planner)
 
+👉 **바로 사용하기: https://cksgml0810.github.io/seat-planner/**
+
 교탁을 기준으로 교실 자리를 배치하는 웹 프로그램입니다. 설치할 필요 없이 **`index.html`을 더블클릭**하면 브라우저에서 바로 열립니다. 인터넷이 없어도 동작합니다.
 
 ## 사용 방법
